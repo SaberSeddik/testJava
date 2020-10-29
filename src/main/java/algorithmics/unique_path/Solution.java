@@ -1,9 +1,5 @@
 package algorithmics.unique_path;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 /**
  * https://leetcode.com/problems/unique-paths-iii/
  * <p>
@@ -46,117 +42,45 @@ import java.util.Objects;
  * <p>
  * 1 <= grid.length * grid[0].length <= 20
  */
-public class Solution {
-
+class Solution {
     public int uniquePathsIII(int[][] grid) {
-        int rows = grid.length;
-        int columns = grid[0].length;
-        List<Case> cases = new ArrayList<>();
-        Case startCase = null, endCase = null;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
+        if (grid == null)
+            return 0;
+        int count = 1;
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[0].length; j++) {
+                count += grid[i][j] == 0 ? 1 : 0;
+            }
+        }
+
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[0].length; j++) {
                 if (grid[i][j] == 1) {
-                    startCase = new Case(i, j);
-                } else if (grid[i][j] == 2) {
-                    endCase = new Case(i, j);
-                    cases.add(endCase);
-                } else if (grid[i][j] == 0) {
-                    cases.add(new Case(i, j));
+                    return pathHelper(i, j, grid.length, grid[0].length, grid, count);
                 }
             }
         }
-        return pathWorks(new CaseAndNextOnes(startCase, cases), endCase);
+        return 0;
     }
 
-    private static int pathWorks(CaseAndNextOnes currentCase, Case destination) {
-        if (currentCase.currentCase.equals(destination) && currentCase.nextCases.isEmpty()) {
-            return 1;
-        }
-        int workingPaths = 0;
-        for (CaseAndNextOnes caseAndNextOnes : nextOf(currentCase)) {
-            workingPaths += pathWorks(caseAndNextOnes, destination);
-        }
-        return workingPaths;
-    }
+    private int pathHelper(int x, int y, int row, int col, int[][] grid, int count) {
+        if (x < 0 || y < 0 || x >= row || y >= col || grid[x][y] == -1 || grid[x][y] == 3)
+            return 0;
 
-    private static List<CaseAndNextOnes> nextOf(CaseAndNextOnes currentCaseAndNext) {
-        List<CaseAndNextOnes> result = new ArrayList<>();
-        Case currentCase = currentCaseAndNext.currentCase;
-        {
-            Case topCase = new Case(currentCase.x - 1, currentCase.y);
-            if (currentCaseAndNext.nextCases.contains(topCase)) {
-                List<Case> nextCases = new ArrayList<>(currentCaseAndNext.nextCases);
-                nextCases.remove(topCase);
-                result.add(new CaseAndNextOnes(topCase, nextCases));
-            }
-        }
-        {
-            Case bottomCase = new Case(currentCase.x + 1, currentCase.y);
-            if (currentCaseAndNext.nextCases.contains(bottomCase)) {
-                List<Case> nextCases = new ArrayList<>(currentCaseAndNext.nextCases);
-                nextCases.remove(bottomCase);
-                result.add(new CaseAndNextOnes(bottomCase, nextCases));
-            }
-        }
-        {
-            Case leftCase = new Case(currentCase.x, currentCase.y - 1);
-            if (currentCaseAndNext.nextCases.contains(leftCase)) {
-                List<Case> nextCases = new ArrayList<>(currentCaseAndNext.nextCases);
-                nextCases.remove(leftCase);
-                result.add(new CaseAndNextOnes(leftCase, nextCases));
-            }
-        }
-        {
-            Case rightCase = new Case(currentCase.x, currentCase.y + 1);
-            if (currentCaseAndNext.nextCases.contains(rightCase)) {
-                List<Case> nextCases = new ArrayList<>(currentCaseAndNext.nextCases);
-                nextCases.remove(rightCase);
-                result.add(new CaseAndNextOnes(rightCase, nextCases));
-            }
-        }
-        return result;
-    }
-
-
-    private static class Case {
-        final int x;
-        final int y;
-
-        Case(int x, int y) {
-            this.x = x;
-            this.y = y;
+        if (grid[x][y] == 2) {
+            return count == 0 ? 1 : 0;
         }
 
-        public int getX() {
-            return x;
-        }
+        int oldNo = grid[x][y];
+        grid[x][y] = 3;
 
-        public int getY() {
-            return y;
-        }
+        int ways = 0;
+        ways += pathHelper(x, y + 1, row, col, grid, count - 1);
+        ways += pathHelper(x + 1, y, row, col, grid, count - 1);
+        ways += pathHelper(x - 1, y, row, col, grid, count - 1);
+        ways += pathHelper(x, y - 1, row, col, grid, count - 1);
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Case aCase = (Case) o;
-            return x == aCase.x &&
-                    y == aCase.y;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(x, y);
-        }
-    }
-
-    private static class CaseAndNextOnes {
-        final Case currentCase;
-        final List<Case> nextCases;
-
-        CaseAndNextOnes(Case currentCase, List<Case> nextCase) {
-            this.currentCase = currentCase;
-            this.nextCases = nextCase;
-        }
+        grid[x][y] = oldNo;
+        return ways;
     }
 }
